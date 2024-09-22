@@ -1,0 +1,23 @@
+name: AWS Resources Starter
+description: Get aws resources based on tags and start them
+
+branding:
+  icon: 'sunrise'
+  color: 'blue'
+  
+inputs:
+  region:
+    description: 'AWS Region'
+    required: true
+    default: "us-east-1"
+  keys:
+    description: 'Comma-separated list of tag keys'
+    required: true
+    default: "Environment,Cloud"
+  values:
+    description: 'Comma-separated list of tag values'
+    required: true
+    default: "dev,test | aws"
+runs:
+    using: 'node20'
+    main: 'dist/index.js'
