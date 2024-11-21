@@ -76616,9 +76616,9 @@ const client_resource_groups_tagging_api_1 = __nccwpck_require__(7920);
 const ecs_1 = __nccwpck_require__(7376);
 const rds_1 = __nccwpck_require__(3555);
 async function getAWSResources() {
-    const region = (0, core_1.getInput)('region', { required: true }); //  "eu-west-1"// 
-    let keysString = (0, core_1.getInput)('keys', { required: true, trimWhitespace: true }); // "Environment";//
-    const valuesString = (0, core_1.getInput)('values', { required: true }); //' dev  '// 
+    const region = (0, core_1.getInput)('region', { required: true }); // "eu-west-1"; //  
+    let keysString = (0, core_1.getInput)('keys', { required: true, trimWhitespace: true }); //"Environment"; // 
+    const valuesString = (0, core_1.getInput)('values', { required: true }); //" dev  ";//
     let keys = keysString.split(",");
     for (let i = 0; i < keys.length; i++) {
         keys[i] = keys[i].trim();
@@ -76646,10 +76646,19 @@ async function getAWSResources() {
             Key: key,
             Values: tagValues[index],
         }));
-        const getResourcesCommand = new client_resource_groups_tagging_api_1.GetResourcesCommand({
-            TagFilters: tagFilters,
-        });
-        const resourcesARN = (await resourceTagClient.send(getResourcesCommand)).ResourceTagMappingList.map((resource) => {
+        let resources = [];
+        let paginationToken = "";
+        let response;
+        do {
+            const getResourcesCommand = new client_resource_groups_tagging_api_1.GetResourcesCommand({
+                TagFilters: tagFilters,
+                PaginationToken: paginationToken,
+            });
+            response = await resourceTagClient.send(getResourcesCommand);
+            resources = resources.concat(response.ResourceTagMappingList);
+            paginationToken = response.PaginationToken;
+        } while (response.PaginationToken != "");
+        const resourcesARN = resources.map((resource) => {
             return resource.ResourceARN;
         });
         await (0, rds_1.startRDSInstances)(region, resourcesARN);
