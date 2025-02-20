@@ -18,7 +18,7 @@ async function startECSServiceTasks(region, resourcesARN) {
     let serviceName;
     try {
         if (!resourcesARN.length) {
-            console.log("No resources found with the specified tags.");
+            (0, core_1.info)("No resources found with the specified tags.");
             return;
         }
         for (const resourceARN of resourcesARN) {
@@ -32,15 +32,15 @@ async function startECSServiceTasks(region, resourcesARN) {
                 });
                 const describeResponse = await ecsClient.send(describeCommand);
                 const runningCount = describeResponse.services[0].runningCount;
-                if (runningCount != 0)
-                    break;
-                const updateCommand = new client_ecs_1.UpdateServiceCommand({
-                    cluster: clusterName,
-                    service: serviceName,
-                    desiredCount: 1,
-                });
-                await ecsClient.send(updateCommand);
-                (0, core_1.info)(`Update command issued to set desired tasks to 1 for service ${serviceName} in cluster ${clusterName}.`);
+                if (runningCount == 0) {
+                    const updateCommand = new client_ecs_1.UpdateServiceCommand({
+                        cluster: clusterName,
+                        service: serviceName,
+                        desiredCount: 1,
+                    });
+                    await ecsClient.send(updateCommand);
+                    (0, core_1.info)(`Update command issued to set desired tasks to 1 for service ${serviceName} in cluster ${clusterName}.`);
+                }
             }
         }
     }
@@ -52,13 +52,13 @@ exports.startECSServiceTasks = startECSServiceTasks;
 function isECSService(resourceARN) {
     if (!resourceARN.startsWith("arn:aws:ecs:"))
         return false;
-    const arnParts = resourceARN.split(':');
-    const clusterAndService = arnParts[5].split('/');
+    const arnParts = resourceARN.split(":");
+    const clusterAndService = arnParts[5].split("/");
     return clusterAndService[0].toLocaleLowerCase() == "service";
 }
 function parseECSServiceArn(serviceArn) {
-    const arnParts = serviceArn.split(':');
-    const clusterAndService = arnParts[5].split('/');
+    const arnParts = serviceArn.split(":");
+    const clusterAndService = arnParts[5].split("/");
     const clusterName = clusterAndService[1];
     const serviceName = clusterAndService[2];
     return { clusterName, serviceName };
